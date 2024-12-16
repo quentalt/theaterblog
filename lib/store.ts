@@ -22,7 +22,7 @@ export const useStore = create<StoreState>((set, get) => ({
       const articles = await response.json();
       set({ articles });
     } catch (error) {
-      console.error('Error fetching articles:', error);
+      console.error('Error fetching plays:', error);
     }
   },
   addArticle: async (articleData) => {

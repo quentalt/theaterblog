@@ -1,35 +1,62 @@
-"use client";
+"use client"
 
-import { useEffect } from "react";
-import { ArticleCard } from "@/components/articles/article-card";
-import { TagCloud } from "@/components/articles/tag-cloud";
-import { Navbar } from "@/components/layout/navbar";
-import { useStore } from "@/lib/store";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import PlayList from "@/components/PlayList";
+import TagCloud from "@/components/articles/TagCloud";
+import { Button } from "@/components/ui/button";
+import SearchBar from "@/components/search/SearchBar";
+import { Article } from "@/lib/types";
 
 export default function Home() {
-    const { articles, fetchArticles } = useStore();
+    const userId = "user-1"; // Simple fixed user ID
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [plays, setPlays] = useState<Article[]>([]);
+    const [tags, setTags] = useState<any[]>([]);
+    const searchParams = useSearchParams();
 
     useEffect(() => {
-        fetchArticles();
-    }, [fetchArticles]);
+        const fetchData = async () => {
+            const params = new URLSearchParams(searchParams.toString());
+            params.set("page", currentPage.toString());
+            const response = await fetch(`/api/plays?${params.toString()}`);
+            const data = await response.json();
+
+            setPlays(data.plays);
+            setTags(data.tags);
+            setTotalPages(data.totalPages);
+        };
+
+        fetchData();
+    }, [searchParams, currentPage]);
+
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
+    };
 
     return (
-        <div>
-            <Navbar />
-            <main className="container mx-auto py-8">
-                <div className="grid grid-cols-12 gap-8">
-                    <div className="col-span-9">
-                        <div className="grid grid-cols-3 gap-6">
-                            {articles.map((article) => (
-                                <ArticleCard key={article.id} article={article} />
-                            ))}
-                        </div>
-                    </div>
-                    <aside className="col-span-3">
-                        <TagCloud />
-                    </aside>
-                </div>
-            </main>
-        </div>
+        <main className="container mx-auto px-4 py-8">
+            <h1 className="text-4xl font-bold mb-8 text-center">Théâtre Blog</h1>
+            <div className="mb-8">
+                <SearchBar tags={tags} />
+            </div>
+            <div className="mb-8">
+                <TagCloud tags={tags} />
+            </div>
+            <PlayList initialPlays={plays} userId={userId} />
+            <div className="mt-6 flex justify-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        variant={currentPage === page ? "default" : "outline"}
+                        className={currentPage === page ? "bg-theater-red text-accent" : "text-theater-black"}
+                    >
+                        {page}
+                    </Button>
+                ))}
+            </div>
+        </main>
     );
 }
