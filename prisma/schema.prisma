@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Play {
+  id          String     @id @default(cuid())
+  title       String
+  date        DateTime
+  location    String
+  description String     @db.Text
+  imageUrl    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  tags        Tag[]      @relation("PlayToTag")
+  actors      Actor[]    @relation("PlayToActor")
+  favorites   Favorite[]
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  plays Play[] @relation("PlayToTag")
+}
+
+model Actor {
+  id       String  @id @default(cuid())
+  name     String
+  imageUrl String
+  bio      String? @db.Text
+  role     String
+  plays    Play[]  @relation("PlayToActor")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  playId    String
+  play      Play     @relation(fields: [playId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, playId])
+  @@index([userId])
+}
